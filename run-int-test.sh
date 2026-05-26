@@ -106,7 +106,11 @@ function export_db_params(){
     export API_MANAGER_DATABASE_USERNAME=$(jq -r '.jdbc[] | select ( .name == '\"${db_name}\"' ) | .database[] | select ( .name == "WSO2AM_APIMGT_DB") | .username' ${INFRA_JSON})
     export API_MANAGER_DATABASE_PASSWORD=$(jq -r '.jdbc[] | select ( .name == '\"${db_name}\"' ) | .database[] | select ( .name == "WSO2AM_APIMGT_DB") | .password' ${INFRA_JSON})
     export API_MANAGER_DATABASE_VALIDATION_QUERY=$(jq -r '.jdbc[] | select ( .name == '\"${db_name}\"' ) | .validation_query' ${INFRA_JSON})
-    
+
+    if [ "$db_type" == "mssql" ]; then
+            export SHARED_DATABASE_URL="${SHARED_DATABASE_URL/WSO2AM_COMMON_DB/shared_db}"
+            export API_MANAGER_DATABASE_URL="${API_MANAGER_DATABASE_URL/WSO2AM_APIMGT_DB/apim_db}"
+        fi
 }
 
 source /etc/environment
@@ -131,7 +135,7 @@ wget -q https://integration-testgrid-resources.s3.amazonaws.com/lib/jdbc/${db_fi
 sed -i "s|DB_HOST|${CF_DB_HOST}|g" ${INFRA_JSON}
 sed -i "s|DB_USERNAME|${CF_DB_USERNAME}|g" ${INFRA_JSON}
 sed -i "s|DB_PASSWORD|${CF_DB_PASSWORD}|g" ${INFRA_JSON}
-sed -i "s|DB_NAME|${DB_NAME}|g" ${INFRA_JSON}
+sed -i "s|DB_NAME|${CF_DB_NAME}|g" ${INFRA_JSON}
 
 export_db_params ${DB_TYPE}
 
@@ -147,7 +151,7 @@ else
 fi
 
 # delete if the folder is available
-rm -rf $$PRODUCT_REPOSITORY_PACK_DIR
+rm -rf $PRODUCT_REPOSITORY_PACK_DIR
 
 mkdir -p $PRODUCT_REPOSITORY_PACK_DIR
 log_info "Copying product pack to Repository"
